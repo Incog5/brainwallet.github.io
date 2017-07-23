@@ -34,7 +34,7 @@
         else
             return [0x80|2, len >> 8, len & 0xff];
     }
-    
+
     encode_id = function(id, s) {
         var len = encode_length(s.length);
         return [id].concat(len).concat(s);
@@ -111,7 +111,7 @@
                     encode_integer(1)
                 )
             ),
-            encode_constructed(1, 
+            encode_constructed(1,
                 encode_bitstring([0].concat(encoded_pub))
             )
         );
@@ -259,6 +259,21 @@
         $('#genAddrQR').html(qrCode.createImgTag(4));
         $('#genAddrURL').attr('href', getAddressURL(addr));
         $('#genAddrURL').attr('title', addr);
+
+        var keyQRCode = qrcode(3, 'L');
+        var text = $('#sec').val();
+        text = text.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '');
+        keyQRCode.addData(text);
+        keyQRCode.make();
+
+        $('#genKeyQR').html(keyQRCode.createImgTag(4));
+        // NMC fix
+        if (ADDRESS_URL_PREFIX.indexOf('explorer.dot-bit.org')>=0 )
+          $('#genAddrURL').attr('href', ADDRESS_URL_PREFIX+'/a/'+addr);
+
+        // chainbrowser fix (needs closing slash for some reason)
+        if (ADDRESS_URL_PREFIX.indexOf('chainbrowser.com')>=0 )
+          $('#genAddrURL').attr('href', ADDRESS_URL_PREFIX+'/address/'+addr+'/');
     }
 
     function genCalcHash() {
@@ -304,7 +319,7 @@
 
         var sec = $('#sec').val();
 
-        try { 
+        try {
             var res = parseBase58Check(sec);
             var version = res[0];
             var payload = res[1];
@@ -445,7 +460,7 @@
         if (min_words>b.length)
             return false;
         for (var i = 0; i < b.length; i++) {
-            if (a.indexOf(b[i].toLowerCase()) == -1 
+            if (a.indexOf(b[i].toLowerCase()) == -1
                 && a.indexOf(b[i].toUpperCase()) == -1)
             return false;
         }
@@ -997,7 +1012,7 @@
     function txGetUnspent() {
         var addr = $('#txAddr').val();
 
-        var url = (txType == 'txBCI') ? 'https://blockchain.info/unspent?cors=true&address=' + addr :
+        var url = (txType == 'txBCI') ? 'https://blockchain.info/unspent?cors=true&active=' + addr :
             'https://blockexplorer.com/q/mytransactions/' + addr;
 
         url = prompt('Press OK to download transaction history:', url);
@@ -1009,7 +1024,7 @@
             $.getJSON(url, function(data) {
               txParseUnspent ( JSON.stringify(data, null, 2) );
             }).fail(function(jqxhr, textStatus, error) {
-              alert( typeof(jqxhr.responseText)=='undefined' ? jqxhr.statusText 
+              alert( typeof(jqxhr.responseText)=='undefined' ? jqxhr.statusText
                 : ( jqxhr.responseText!='' ? jqxhr.responseText : 'No data, probably Access-Control-Allow-Origin error.') );
             });
 
@@ -1115,7 +1130,7 @@
         var fee = parseFloat('0'+$('#txFee').val());
 
         try {
-            var res = parseBase58Check(sec); 
+            var res = parseBase58Check(sec);
             var version = res[0];
             var payload = res[1];
         } catch (err) {
@@ -1281,7 +1296,7 @@
         var eckey = null;
         var compressed = false;
         try {
-            var res = parseBase58Check(sec); 
+            var res = parseBase58Check(sec);
             var privkey_version = res[0];
             var payload = res[1];
 
@@ -1721,5 +1736,15 @@
           console.log ('secureRandom is not supported');
         }
 
+        $('#toggleKeyCode').on('click', function() {
+            $('#genKeyQR').slideToggle();
+            $('#sec').closest('.form-group').slideToggle();
+        });
+
+        $('#togglePass').on('click', function(){
+            var type = $('#pass').attr('type');
+            type = (type === 'text' ? 'password' : 'text');
+            $('#pass').attr('type', type);
+        });
     });
 })(jQuery);
